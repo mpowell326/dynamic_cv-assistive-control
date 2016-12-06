@@ -73,22 +73,60 @@ find_library(ARUCO_LIB NAMES libaruco.so REQUIRED
 
 # Add executables and link libraries
 # -------------------------------------------------------------------------
-add_executable( bin/DisplayImage src/displayImage.cpp )
-target_link_libraries( bin/DisplayImage ${OpenCV_LIBS} )
+# add_executable( bin/DisplayImage src/displayImage.cpp )
+# target_link_libraries( bin/DisplayImage ${OpenCV_LIBS} )
 
 
-add_executable( bin/DisplayVideo src/test1.cpp )
-target_link_libraries( bin/DisplayVideo ${OpenCV_LIBS} )
+# add_executable( bin/DisplayVideo src/test1.cpp )
+# target_link_libraries( bin/DisplayVideo ${OpenCV_LIBS} )
 
 
-add_executable( bin/CVAssist src/main.cpp )
-target_link_libraries( bin/${PROJECT_NAME} ${OpenCV_LIBS} realsense)
+# add_executable( bin/CVAssist src/main.cpp )
+# target_link_libraries( bin/${PROJECT_NAME} ${OpenCV_LIBS} realsense)
 
   
-add_executable( bin/Aruco_tracker src/arucoMarkerTracker.cpp )
-target_link_libraries( bin/Aruco_tracker ${OpenCV_LIBS} ${ARUCO_LIB} )
+# add_executable( bin/Aruco_tracker src/arucoMarkerTracker.cpp  )
+# target_link_libraries( bin/Aruco_tracker ${OpenCV_LIBS} ${ARUCO_LIB} )
+
+
+# Create Python wrapper/package with Boost
+# -------------------------------------------------------------------------
+FIND_PACKAGE(Boost 1.54.0)
+
+
+IF(Boost_FOUND)
+  INCLUDE_DIRECTORIES("${Boost_INCLUDE_DIRS}" "/usr/include/python2.7")
+  SET(Boost_USE_STATIC_LIBS OFF)
+  SET(Boost_USE_MULTITHREADED ON)
+  SET(Boost_USE_STATIC_RUNTIME OFF)
+  FIND_PACKAGE(Boost 1.54.0 COMPONENTS python)
+
+  # find_library( BOOST_PYTHON NAMES libboost_python* libboost-python*
+  #       PATHS /usr/lib/x86_64-linux-gnu/
+  #             /usr/lib64
+  #             /usr/lib
+  #             /usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+  #             /usr/local/lib64
+  #             /usr/local/lib
+  #             /usr/local/lib/${CMAKE_LIBRARY_ARCHITECTURE}
+  #             )
 
 
 
+  IF(Boost_FOUND)
+    ADD_LIBRARY(_arucoTracker SHARED src/arucoTracker.cxx src/arucoMarkerTracker.cpp)
+    TARGET_LINK_LIBRARIES(_arucoTracker ${Boost_LIBRARIES}  ${ARUCO_LIB} ${OpenCV_LIBS}) #${BOOST_PYTHON}
+  ELSEIF(NOT Boost_FOUND)
+    MESSAGE(FATAL_ERROR "Unable to find  Boost python")
+  ENDIF()
 
+ELSEIF(NOT Boost_FOUND)
+  MESSAGE(FATAL_ERROR "Unable to find correct Boost version. Did you set BOOST_ROOT?")
+ENDIF()
+
+IF(CMAKE_COMPILER_IS_GNUCXX)
+  ADD_DEFINITIONS("-Wall")
+ELSE()
+  MESSAGE(FATAL_ERROR "CMakeLists.txt has not been tested/written for your compiler.")
+ENDIF()
 

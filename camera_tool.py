@@ -10,7 +10,12 @@ import time
 import select
 import socket
 from can_tool import *
-
+import importutils
+importutils.addImportDirectory('/home/nuc/projects/cv_assistive_control')
+import lib_arucoTracker
+import cv2
+import math
+import collections
 
 # class socketConnection():
 #     # sock
@@ -47,6 +52,18 @@ from can_tool import *
 #         # Clean up the connection
 #         self.connection.close()
 
+def moving_average(iterable, n=3):
+    # moving_average([40, 30, 50, 46, 39, 44]) --> 40.0 42.0 45.0 43.0
+    # http://en.wikipedia.org/wiki/Moving_average
+    it = iter(iterable)
+    d = deque(itertools.islice(it, n-1))
+    d.appendleft(0)
+    s = sum(d)
+    for elem in it:
+        s += elem - d.popleft()
+        d.append(elem)
+        yield s / n
+
 
 class CanCameraInteraface(CanTool):
     jsXdemand = 0
@@ -56,6 +73,9 @@ class CanCameraInteraface(CanTool):
     x_restrict = 0
     y_restrict = 0
     cameraConnected = False
+    camX = 0
+    camY = 0
+    camZ = collections.deque(maxlen=10)
 
     def getJSDemand(self):
         messages = self.incoming_messages.get_filtered_messages(100,PGN.IS_2D_16BIT_USER_INPUT_DEMAND)
@@ -98,26 +118,56 @@ class CanCameraInteraface(CanTool):
         # Send message to tell remote to start listening
         self.sendAdjustedDemand()
 
-        # # Connect to camera service
-        # camSocket = socketConnection()      
-        # camSocket.init(('localhost', 10000))
-        # print >> sys.stderr, 'Checking for a connection to camera service'
-        # if camSocket.waitForConnection():
-        #     self.cameraConnected = True
+
+        self.cameraConnected = True
+        
+        if self.cameraConnected == True:
+
+            # camera = lib_arucoTracker.arucoTracker(10, 0.198)
+            camera = lib_arucoTracker.arucoTracker(244, 0.032)
+            id = camera.getTrackedMarkerID()
+            print('Tracked Marker ID: {}'.format(id))
+
+            camera.openCaptureDevice(0)
+            camera.setDetectorParams()
+            camera.calibrateFromFile("/home/nuc/src/aruco-2.0.14/build/utils_calibration/cameraCalibration.yml")
 
 
         while True:
             try:
                 # Receive the current joystick demand from the can bus
                 self.getJSDemand()
-                
 
                 # Get the x,y restriction to apply
                 if self.cameraConnected :
-                    self.x_restrict, self.y_restrict = camSocket.getCameraData()
-                # elif camSocket.waitForConnection():
-                #     self.cameraConnected = True
-                #     self.x_restrict, self.y_restrict = camSocket.getCameraData()
+                    camera.getNextFrame();
+                    camera.detectMarkers();
+                    # camera.displayMarker();
+
+                    if(camera.getMarkerPoseZ() > 0):
+                        self.camX = camera.getMarkerPoseX()
+                        self.camY = camera.getMarkerPoseY()
+                        self.camZ.append(camera.getMarkerPoseZ())
+                    else:
+                        self.camX = 0
+                        self.camY = 0
+                        self.camZ.append(1)
+
+                    angle = math.atan2(self.camX, self.camY)
+
+                    if (sum(self.camZ)/10 < 1 and sum(self.camZ)/10 > 0 ):
+                        self.y_restrict = (1-sum(self.camZ)/10)*100
+                    else:
+                        self.y_restrict = 0
+
+                    # if (math.fabs(angle) < 45):
+                    #     self.x_restrict = cmp(angle,0)*50   
+
+
+                    if(cv2.waitKey(1000/30)==27):    # tab key
+                        break
+
+
                 else:
                     # Get keyboard input
                     line = self.pollKeyboard()
@@ -134,7 +184,7 @@ class CanCameraInteraface(CanTool):
 
                 self.incoming_messages.clear_messages()
                 # print("JS(X): {0} JS(Y): {1}".format(self.jsXdemand, self.jsYdemand))
-                print("adj(X): {: 7.2f} adj(Y): {: 7.2f} | x: {: 3d} y: {: 3d}".format(self.adjXdemand, self.adjYdemand, self.x_restrict,self.y_restrict))
+                print("adj(X): {: 7.2f} adj(Y): {: 7.2f} | x: {: 3f} y: {: 3f} z: {: 3f}".format(self.adjXdemand, self.adjYdemand, self.camX,self.camY,self.y_restrict))
 
             except KeyboardInterrupt:
                 break

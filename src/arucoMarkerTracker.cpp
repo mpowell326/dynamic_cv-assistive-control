@@ -4,31 +4,16 @@
 #include <aruco/dictionary.h>
 #include <aruco/cvdrawingutils.h>
 #include <opencv2/highgui/highgui.hpp>
+#include "arucoMarkerTracker.hpp"
 using namespace cv;
 using namespace aruco;
 using namespace std;
 
 
 #define TRACKED_MARKER_ID 	244
+
+
 // -------------------------------------------------------------------------
-
-class Camera
-{
-public:
-	VideoCapture	videoCaptureDevice;
-	Mat				frame;
-	double			fps;
-	int				frame_width;
-	int				frame_height;
-	CameraParameters CamParam;
-
-	Camera(void);
-	void getNextFrame();	
-	void openCaptureDevice(int);
-	void calibrateFromFile(char*);
-	void displayFrame(void);
-};
-
 Camera::Camera(void)
 {
 	fps = 24.0;
@@ -51,15 +36,15 @@ void Camera::openCaptureDevice(int deviceNum)
 void Camera::getNextFrame()
 {
 	videoCaptureDevice >> frame;
-	// if( frame.empty() )
- //    {
- //        std::cout << "Can't read frames from the camera\n";
- //    }
+	if( frame.empty() )
+    {
+        std::cout << "Can't read frames from the camera\n";
+    }
 }
 
 void Camera::displayFrame(void)
 {
-	// namedWindow( "Video", 1 );
+	namedWindow( "Video", 1 );
 	imshow( "Video", frame );
 }
 
@@ -70,27 +55,6 @@ void Camera::calibrateFromFile(char* filepath)
 }
 
 // -------------------------------------------------------------------------
-
-class arucoTracker : public Camera
-{
-public:
-	MarkerDetector MDetector;
-	vector<Marker> Markers;
-	MarkerPoseTracker MTracker;
-	int tracked_marker_id;
-	float marker_size;
-	Marker tracked_marker;
-
-	arucoTracker();
-	arucoTracker(int, float);
-	~arucoTracker();
-	void init();
-	void detectMarkers();
-	Marker getPose(Marker);
-	void displayMarker();
-	void setDetectorParams();
-	
-};
 
 arucoTracker::arucoTracker()
 {
@@ -113,6 +77,12 @@ void arucoTracker::setDetectorParams()
     MDetector.setThresholdParamRange(2, 0);
 }
 
+Marker arucoTracker::estimateMarkerPose(Marker marker)
+{
+	MTracker.estimatePose( marker, CamParam, marker_size );//call its tracker and estimate the pose
+	return marker;
+}
+
 void arucoTracker::detectMarkers()
 {
 	if (CamParam.isValid() && marker_size != -1)
@@ -123,36 +93,53 @@ void arucoTracker::detectMarkers()
 	{
 		 Markers = MDetector.detect( frame );
 	}
-}
-
-Marker arucoTracker::getPose(Marker marker)
-{
-	MTracker.estimatePose( marker, CamParam, marker_size );//call its tracker and estimate the pose
-	return marker;
-}
-
-void arucoTracker::displayMarker()
-{
+	tracked_marker = NULL;
 	for( auto & marker:Markers )//for each marker
 	{
 	    if( marker.id == tracked_marker_id )
 	    {
-
-	        tracked_marker = getPose(marker);
-	        tracked_marker.draw(frame, Scalar(0, 0, 255), 2);
-	        
-	        // draw a 3d cube if there is 3d info
-	        if (CamParam.isValid() && marker_size != -1)
-	        {
-	            CvDrawingUtils::draw3dAxis(frame, tracked_marker, CamParam);
-	            CvDrawingUtils::draw3dCube(frame, tracked_marker, CamParam);
-	        }
+	    	tracked_marker = estimateMarkerPose(marker);
 	    }
 	}
+}
+
+void arucoTracker::displayMarker()
+{       
+    tracked_marker.draw(frame, Scalar(0, 0, 255), 2);
+    
+    // draw a 3d cube if there is 3d info
+    if (CamParam.isValid() && marker_size != -1)
+    {
+        CvDrawingUtils::draw3dAxis(frame, tracked_marker, CamParam);
+        CvDrawingUtils::draw3dCube(frame, tracked_marker, CamParam);
+    }
+	
 	namedWindow( "Marker", 1 );
 	imshow( "Marker", frame );
 }
 
+double arucoTracker::getMarkerPoseX()
+{
+	std::vector<double> vecXYZ;
+	vecXYZ = tracked_marker.Tvec;
+
+	return vecXYZ[0];
+}
+
+double arucoTracker::getMarkerPoseY()
+{
+	std::vector<double> vecXYZ;
+	vecXYZ = tracked_marker.Tvec;
+
+	return vecXYZ[1];
+}
+double arucoTracker::getMarkerPoseZ()
+{
+	std::vector<double> vecXYZ;
+	vecXYZ = tracked_marker.Tvec;
+
+	return vecXYZ[2];
+}
 // -------------------------------------------------------------------------
 
 int main(int argc, char const *argv[])
@@ -176,9 +163,9 @@ int main(int argc, char const *argv[])
 			cout<<"Exception :"<<ex.what()<<endl;
 		}
 
-		if (ArucoTracker.tracked_marker == TRACKED_MARKER_ID)
+		if (ArucoTracker.getTrackedMarkerID() == TRACKED_MARKER_ID)
 		{
-			cout << ArucoTracker.tracked_marker.Tvec << endl;
+			cout << ArucoTracker.getMarkerPoseXYZ()[0] << endl;
 			
 		}
 
