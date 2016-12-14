@@ -67,29 +67,35 @@ find_package( OpenCV REQUIRED )
 find_library(ARUCO_LIB NAMES libaruco.so REQUIRED
         PATHS /usr/local/lib )
 
-# include_directories(${ARUCO_INCLUDE_DIR})
-# list(APPEND DEPENDENCIES m aruco)
+include_directories(${ARUCO_INCLUDE_DIR})
+list(APPEND DEPENDENCIES m aruco)
 
 
 # Add executables and link libraries
 # -------------------------------------------------------------------------
+# Basic RGB camera display:
 # add_executable( bin/DisplayImage src/displayImage.cpp )
 # target_link_libraries( bin/DisplayImage ${OpenCV_LIBS} )
 
-
+# Another basic test:
 # add_executable( bin/DisplayVideo src/test1.cpp )
 # target_link_libraries( bin/DisplayVideo ${OpenCV_LIBS} )
 
+# Aruco Fiducial Marker Tracker:
+# add_executable( bin/Aruco_tracker src/arucoMarkerTracker.cpp src/RgbCamera.cpp)
+# target_link_libraries( bin/Aruco_tracker ${OpenCV_LIBS} ${ARUCO_LIB})
 
-# add_executable( bin/CVAssist src/main.cpp )
-# target_link_libraries( bin/${PROJECT_NAME} ${OpenCV_LIBS} realsense)
+# Librealsense example: 
+# add_executable( bin/realsenseTest src/main.cpp )
+# target_link_libraries( bin/realsenseTest ${OpenCV_LIBS} realsense)
 
+# Main collision avoidance program:
+add_executable( bin/collision src/Camera.cpp src/ObjectDetector.cpp src/RsCamera.cpp src/main.cpp )
+target_link_libraries( bin/collision ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
   
-# add_executable( bin/Aruco_tracker src/arucoMarkerTracker.cpp  )
-# target_link_libraries( bin/Aruco_tracker ${OpenCV_LIBS} ${ARUCO_LIB} )
 
 
-# Create Python wrapper/package with Boost
+# link Python wrapper/package with Boost and create libraries
 # -------------------------------------------------------------------------
 FIND_PACKAGE(Boost 1.54.0)
 
@@ -114,8 +120,13 @@ IF(Boost_FOUND)
 
 
   IF(Boost_FOUND)
-    ADD_LIBRARY(_arucoTracker SHARED src/arucoTracker.cxx src/arucoMarkerTracker.cpp)
-    TARGET_LINK_LIBRARIES(_arucoTracker ${Boost_LIBRARIES}  ${ARUCO_LIB} ${OpenCV_LIBS}) #${BOOST_PYTHON}
+    # ADD_LIBRARY(_arucoTracker SHARED src/arucoMarkerTracker.cpp src/RgbCamera.cpp)
+    # TARGET_LINK_LIBRARIES(_arucoTracker ${Boost_LIBRARIES}  ${ARUCO_LIB} ${OpenCV_LIBS}) #${BOOST_PYTHON}
+
+    ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
+    TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
+
+
   ELSEIF(NOT Boost_FOUND)
     MESSAGE(FATAL_ERROR "Unable to find  Boost python")
   ENDIF()
