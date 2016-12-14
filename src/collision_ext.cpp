@@ -8,6 +8,7 @@
 // #include "RsCamera.hpp"
 #include "CollsionDetector.hpp"
 
+
 BOOST_PYTHON_MODULE(lib_collision_ext)
 {   
     using namespace boost::python;
@@ -15,7 +16,8 @@ BOOST_PYTHON_MODULE(lib_collision_ext)
     class_<CollisionDetector>("CollisionDetector",init<>())
         .def("start", &CollisionDetector::start)
         .def("update", &CollisionDetector::update)
-        // .def("stop", &CollisionDetector::stop)
+        .def("stop", &CollisionDetector::stop)
+        .def_readwrite("isClose", &CollisionDetector::isClose);
     ;
 }
 

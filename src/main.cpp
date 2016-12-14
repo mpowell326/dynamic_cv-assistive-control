@@ -8,8 +8,9 @@
 /////////////////////////////////////////////////////////////////////////////
 int main( ) try
 {
-    rs::context rsContex; 
-    RsCamera  rsCamera(&rsContex);
+    // rs::context rsContex; 
+    // RsCamera  rsCamera(&rsContex);
+    RsCamera rsCamera;
     ObjectDetector objectDetector(&rsCamera);
 
     rs::log_to_console( rs::log_severity::warn );

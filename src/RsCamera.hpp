@@ -21,7 +21,7 @@ class RsCamera : public Camera
 {
 public:
     RsCamera();
-    RsCamera(rs::context* context);
+    // RsCamera(rs::context* context);
 	bool initializeStreaming();
     bool disableStreaming();
     void startStream(rs_stream stream, rs_format format);
@@ -38,7 +38,7 @@ public:
 
 private:
 	rs::device* 	_device = NULL;
-    rs::context* _rsCtx;             // Create a context object. This object owns the handles to all connected realsense devices.
+    rs::context _rsCtx;             // Create a context object. This object owns the handles to all connected realsense devices.
     static const int streams = 4;
     
     std::vector<uint16_t> supported_streams = { (uint16_t)rs::stream::depth, (uint16_t)rs::stream::color, (uint16_t)rs::stream::infrared};

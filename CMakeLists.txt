@@ -11,9 +11,12 @@ cmake_minimum_required(VERSION 2.8)
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
+# if(COMPILER_SUPPORTS_CXX11)
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#     message("c11")
+# else
+if(COMPILER_SUPPORTS_CXX0X)
+    message("c0x")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 else()
     message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
@@ -123,8 +126,8 @@ IF(Boost_FOUND)
     # ADD_LIBRARY(_arucoTracker SHARED src/arucoMarkerTracker.cpp src/RgbCamera.cpp)
     # TARGET_LINK_LIBRARIES(_arucoTracker ${Boost_LIBRARIES}  ${ARUCO_LIB} ${OpenCV_LIBS}) #${BOOST_PYTHON}
 
-    ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
-    TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
+    # ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
+    # TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
 
 
   ELSEIF(NOT Boost_FOUND)

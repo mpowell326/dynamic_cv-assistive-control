@@ -44,7 +44,7 @@ bool ObjectDetector::isObjectClose()
 
 
 	/* Is object likely closer than 'distance = 1.25m' to camera. */
-	if (cv::mean(output)[1] > 0.1) 
+	if (cv::mean(output)[0] > 0.1) 
 	{
 		return true;
 	}

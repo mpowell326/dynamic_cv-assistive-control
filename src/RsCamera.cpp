@@ -8,26 +8,26 @@
 #define WINDOW_IR	  "IR Image"
 
 RsCamera::RsCamera(){}
-RsCamera::RsCamera(rs::context* context)
-{
-    _rsCtx = context;
-}
+// RsCamera::RsCamera(rs::context* context)
+// {
+//     _rsCtx = context;
+// }
 
 bool RsCamera::initializeStreaming()
 {
     bool success = false;
 
-	printf("There are %d connected RealSense devices.\n", _rsCtx->get_device_count());
-    if(_rsCtx->get_device_count() != 0)
+	printf("There are %d connected RealSense devices.\n", _rsCtx.get_device_count());
+    if(_rsCtx.get_device_count() != 0)
     {
-        _device = _rsCtx->get_device(0);
+        _device = _rsCtx.get_device(0);
 
         printf("\nUsing device 0, an %s\n", _device->get_name());
         printf("    Serial number: %s\n", _device->get_serial());
         printf("    Firmware version: %s\n", _device->get_firmware_version());
 
         /* Configure all streams to run at VGA resolution at 60 frames per second */
-        _device->enable_stream(rs::stream::depth, 0, 0, rs::format::z16, fps, rs::output_buffer_format::native);
+        _device->enable_stream(rs::stream::depth, 0, 0, rs::format::disparity16, fps, rs::output_buffer_format::native);
         _device->enable_stream(rs::stream::color, frameWidth, frameHeight, rs::format::rgb8, fps, rs::output_buffer_format::native);
         _device->enable_stream(rs::stream::infrared, 0, 0, rs::format::y8, fps, rs::output_buffer_format::native);
         if (_device->supports(rs::capabilities::infrared2))
@@ -40,6 +40,11 @@ bool RsCamera::initializeStreaming()
             supported_streams.push_back((uint16_t)rs::stream::infrared2);
             resolutions[rs::stream::infrared2] = { _device->get_stream_width(rs::stream::infrared2), _device->get_stream_height(rs::stream::infrared2), rs::format::y8 };
 
+        cout<<"Depth Clamp"<<endl;
+        cout<< resolutions[rs::stream::depth].width <<endl;
+        cout<< _device->get_option(rs::option::r200_depth_clamp_min) <<endl;
+
+        rs::apply_depth_control_preset(_device, 4);
         _device->start();
 
         success = true;
@@ -128,7 +133,7 @@ void RsCamera::ConvertRsframe2OpenCVMat(rs::stream stream, const void * data, cv
 
     if(stream == rs::stream::depth)
     {
-        outImg->convertTo( (* outImg), CV_8UC1, 1.0f* _device->get_depth_scale() );
+        outImg->convertTo( (* outImg), CV_8UC1, 1.0f/ _device->get_depth_scale() );
     }
     if( stream == rs::stream::color)
     {
@@ -250,7 +255,7 @@ void RsCamera::displayStreamsGL()
 
 void RsCamera::convertDepthMat4Display(cv::Mat* input, cv::Mat* output)
 {
-    input->convertTo( (* output), CV_8UC1, 255.0f);
+    input->convertTo( (* output), CV_8UC1, 100.0f);
     applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
 }
 void RsCamera::displayStreams()

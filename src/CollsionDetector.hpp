@@ -4,10 +4,10 @@
 #include "RsCamera.hpp"
 #include "ObjectDetector.hpp"
 
-class CollisionDetector : public ObjectDetector
+class CollisionDetector
 {
 public:
-    CollisionDetector();
+    CollisionDetector() : rsCamera(), objectDetector() {}
     ~CollisionDetector();
     
     void start();
@@ -16,9 +16,9 @@ public:
     
 	RsCamera rsCamera;
     ObjectDetector objectDetector;
+
+    bool isClose;
 };
-
-
 
 
 

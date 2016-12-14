@@ -1,10 +1,20 @@
 #include "CollsionDetector.hpp"
 
 
-CollisionDetector::CollisionDetector(){}
+// rs::context rsContex; 
+
+// CollisionDetector::CollisionDetector(){
+
+
+//     // rsCamera = RsCamera();
+//     // objectDetector = ObjectDetector();
+// }
 
 void CollisionDetector::start()
 {
+    // rs::context rsContex; 
+    // RsCamera  rsCamera(&rsContex);
+    
     objectDetector.setCamera(&rsCamera);
 
     rs::log_to_console( rs::log_severity::warn );
@@ -17,7 +27,7 @@ void CollisionDetector::start()
         // return EXIT_FAILURE;
     }
 
-    rsCamera.setupWindows();
+    // rsCamera.setupWindows();
 }
 
 
@@ -28,9 +38,9 @@ void CollisionDetector::update()
 	    // if( rsCamera._device.is_streaming( ) )
 
 	    rsCamera.getNextFrame();
-	    objectDetector.isObjectClose();
-	    rsCamera.displayStreams();
-	    
+	    isClose = objectDetector.isObjectClose();
+	    // rsCamera.displayStreams();
+
 	    // rsCamera.displayStreamsGL();
 	    rsCamera.displayFPS();
 
@@ -49,15 +59,15 @@ void CollisionDetector::update()
 
 CollisionDetector::~CollisionDetector()
 {
-    rsCamera.disableStreaming();
-    cv::destroyAllWindows();
+    // rsCamera.disableStreaming();
+    // cv::destroyAllWindows();
 }
 
-// void CollisionDetector::stop()
-// {
-//     rsCamera.disableStreaming();
-//     cv::destroyAllWindows( );
-//     // return EXIT_SUCCESS;
-// }
+void CollisionDetector::stop()
+{
+    rsCamera.disableStreaming();
+    cv::destroyAllWindows( );
+    // return EXIT_SUCCESS;
+}
 
 
