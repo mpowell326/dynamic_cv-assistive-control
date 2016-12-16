@@ -40,10 +40,11 @@ bool RsCamera::initializeStreaming()
             supported_streams.push_back((uint16_t)rs::stream::infrared2);
             resolutions[rs::stream::infrared2] = { _device->get_stream_width(rs::stream::infrared2), _device->get_stream_height(rs::stream::infrared2), rs::format::y8 };
 
-        cout<<"Depth Clamp"<<endl;
-        cout<< resolutions[rs::stream::depth].width <<endl;
-        cout<< _device->get_option(rs::option::r200_depth_clamp_min) <<endl;
+        // cout<<"Depth Clamp"<<endl;
+        // cout<< resolutions[rs::stream::depth].width <<endl;
+        // cout<< _device->get_option(rs::option::r200_depth_clamp_min) <<endl;
 
+        cout<< "Motion?: " << _device->supports(rs::capabilities::motion_events) <<endl;
         rs::apply_depth_control_preset(_device, 4);
         _device->start();
 
@@ -154,7 +155,7 @@ void RsCamera::getNextFrame()
     {
         for (auto i : supported_streams)
         {
-            auto res = resolutions[(rs::stream)i];
+         //   auto res = resolutions[(rs::stream)i];
             rawFrame = _device->get_frame_data( (rs::stream)i );
             ConvertRsframe2OpenCVMat( (rs::stream)i, rawFrame , &rawStreamData[i] );
 
@@ -186,7 +187,7 @@ void RsCamera::uploadFrames()
 void  RsCamera::setupWindows()
 {
     cv::namedWindow( WINDOW_DEPTH, 0 );
-    cv::namedWindow( WINDOW_RGB, 0 );
+    cv::namedWindow( "Thresholded", 0 );
 }
 
 
@@ -256,7 +257,7 @@ void RsCamera::displayStreamsGL()
 void RsCamera::convertDepthMat4Display(cv::Mat* input, cv::Mat* output)
 {
     input->convertTo( (* output), CV_8UC1, 100.0f);
-    applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
+    // applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
 }
 void RsCamera::displayStreams()
 {

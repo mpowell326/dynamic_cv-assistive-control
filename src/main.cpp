@@ -32,6 +32,7 @@ int main( ) try
 
         rsCamera.getNextFrame();
         objectDetector.isObjectClose();
+        objectDetector.findBlobs();
         rsCamera.displayStreams();
         
         // rsCamera.displayStreamsGL();

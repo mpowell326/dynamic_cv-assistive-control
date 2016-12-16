@@ -27,7 +27,7 @@ void CollisionDetector::start()
         // return EXIT_FAILURE;
     }
 
-    // rsCamera.setupWindows();
+    rsCamera.setupWindows();
 }
 
 
@@ -39,7 +39,7 @@ void CollisionDetector::update()
 
 	    rsCamera.getNextFrame();
 	    isClose = objectDetector.isObjectClose();
-	    // rsCamera.displayStreams();
+	    rsCamera.displayStreams();
 
 	    // rsCamera.displayStreamsGL();
 	    rsCamera.displayFPS();
