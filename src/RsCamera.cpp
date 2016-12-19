@@ -1,3 +1,14 @@
+/* -------------------------------------------------------------
+    src/RsCamera.cpp        
+
+    Purpose:    Interface to realsense camera for streaming and
+                retrieving frames providing them in cv::Mat a
+                format.
+    
+    Created:    Dec 2016
+    Author:     Morgan
+   ------------------------------------------------------------- */
+
 #include "RsCamera.hpp"
 
 
@@ -8,12 +19,19 @@
 #define WINDOW_IR	  "IR Image"
 
 RsCamera::RsCamera(){}
-// RsCamera::RsCamera(rs::context* context)
-// {
-//     _rsCtx = context;
-// }
 
-bool RsCamera::initializeStreaming()
+
+void RsCamera::setParams()
+{
+    // cout<<"Depth Clamp"<<endl;
+    // cout<< _device->get_option(rs::option::r200_depth_clamp_min) <<endl;
+
+    // cout<< "Motion?: " << _device->supports(rs::capabilities::motion_events) <<endl;
+    rs::apply_depth_control_preset(_device, 4);   
+}
+
+
+bool RsCamera::startStreaming()
 {
     bool success = false;
 
@@ -33,19 +51,15 @@ bool RsCamera::initializeStreaming()
         if (_device->supports(rs::capabilities::infrared2))
             _device->enable_stream(rs::stream::infrared2, 0, 0, rs::format::y8, fps, rs::output_buffer_format::native);
 
-        resolutions[rs::stream::depth] = { _device->get_stream_width(rs::stream::depth), _device->get_stream_height(rs::stream::depth), rs::format::z16 };
-        resolutions[rs::stream::color] = { _device->get_stream_width(rs::stream::color), _device->get_stream_height(rs::stream::color), rs::format::rgb8 };
-        resolutions[rs::stream::infrared] = { _device->get_stream_width(rs::stream::infrared), _device->get_stream_height(rs::stream::infrared), rs::format::y8 };
-        if(_device->supports(rs::capabilities::infrared2))
-            supported_streams.push_back((uint16_t)rs::stream::infrared2);
-            resolutions[rs::stream::infrared2] = { _device->get_stream_width(rs::stream::infrared2), _device->get_stream_height(rs::stream::infrared2), rs::format::y8 };
 
-        // cout<<"Depth Clamp"<<endl;
-        // cout<< resolutions[rs::stream::depth].width <<endl;
-        // cout<< _device->get_option(rs::option::r200_depth_clamp_min) <<endl;
 
-        cout<< "Motion?: " << _device->supports(rs::capabilities::motion_events) <<endl;
-        rs::apply_depth_control_preset(_device, 4);
+        // resolutions[rs::stream::depth] = { _device->get_stream_width(rs::stream::depth), _device->get_stream_height(rs::stream::depth), rs::format::z16 };
+        // resolutions[rs::stream::color] = { _device->get_stream_width(rs::stream::color), _device->get_stream_height(rs::stream::color), rs::format::rgb8 };
+        // resolutions[rs::stream::infrared] = { _device->get_stream_width(rs::stream::infrared), _device->get_stream_height(rs::stream::infrared), rs::format::y8 };
+        // if(_device->supports(rs::capabilities::infrared2))
+        //     supported_streams.push_back((uint16_t)rs::stream::infrared2);
+        //     resolutions[rs::stream::infrared2] = { _device->get_stream_width(rs::stream::infrared2), _device->get_stream_height(rs::stream::infrared2), rs::format::y8 };
+
         _device->start();
 
         success = true;
@@ -53,27 +67,53 @@ bool RsCamera::initializeStreaming()
     return success;
 }
 
-
-bool RsCamera::disableStreaming()
+void RsCamera::stopStreaming()
 {
     _device->stop();
 
-    for (auto i : supported_streams)
+    for (auto i : enabled_streams)
     {
         if (_device->is_stream_enabled((rs::stream)i))
             _device->disable_stream((rs::stream)i);
     }
-
-    return true;
 }
 
+
+void RsCamera::getNextFrame()
+{
+    const void * rawFrame;
+    const double timestamp = _device->get_frame_timestamp(rs::stream::color);
+
+    _device->wait_for_frames();
+
+    if(timestamp != last_timestamp)
+    {
+        for (auto i : enabled_streams)
+        {
+            rawFrame = _device->get_frame_data( (rs::stream)i );
+            convertRsFrame2Mat( (rs::stream)i, rawFrame , &streams_mat[i] );
+        }
+
+        last_timestamp = timestamp;
+        ++num_frames;
+        if(timestamp >= next_time)
+        {
+            currentFps = num_frames;
+            num_frames = 0;
+            next_time += 1000;
+        }
+    }
+}
  
-void RsCamera::ConvertRsframe2OpenCVMat(rs::stream stream, const void * data, cv::Mat *outImg)
+void RsCamera::convertRsFrame2Mat(rs::stream stream, const void * data, cv::Mat *outImg)
 {
     int cvDataType;
     int cvDataWidth;
 
-    switch (_device->get_stream_format( stream ))
+
+    rs::format streamFormat = _device->get_stream_format( stream );
+    cout << "Stream format: " << streamFormat <<endl;
+    switch (streamFormat)
     {
         case rs::format::any:
             throw std::runtime_error("not a valid format");
@@ -126,12 +166,13 @@ void RsCamera::ConvertRsframe2OpenCVMat(rs::stream stream, const void * data, cv
             throw std::runtime_error("The requested format is not provided by demo");
             break;
     }
-
+    cout<<"here"<<endl;
     int h = _device->get_stream_height(stream);
     int w = _device->get_stream_width(stream);
+    cout<<"here0, h: "<< h << " w: "<<w<<endl;
     outImg->create( h, w, cvDataType);
     memcpy(outImg->data, (uchar*)reinterpret_cast<const uint8_t *>(data), h*w*cvDataWidth);
-
+    cout<<"here1"<<endl;
     if(stream == rs::stream::depth)
     {
         outImg->convertTo( (* outImg), CV_8UC1, 1.0f/ _device->get_depth_scale() );
@@ -140,58 +181,82 @@ void RsCamera::ConvertRsframe2OpenCVMat(rs::stream stream, const void * data, cv
     {
         cv::cvtColor( (* outImg), (* outImg), cv::COLOR_BGR2RGB );
     }
+    cout<<"here2"<<endl;
 }
 
 
-void RsCamera::getNextFrame()
+int RsCamera::getFps()
 {
-    const void * rawFrame;
-    std::vector<uint8_t> rgb;
-    const double timestamp = _device->get_frame_timestamp(rs::stream::color);
+    return currentFps;
+}
 
-    _device->wait_for_frames();
 
-    if(timestamp != last_timestamp)
+cv::Mat* RsCamera::getMat(rs::stream stream)
+{
+    return &streams_mat[(int)stream];
+}
+
+
+
+
+
+
+void Displayer::initializeWindows()
+{
+    for (auto i : displayed_streams)
     {
-        for (auto i : supported_streams)
-        {
-         //   auto res = resolutions[(rs::stream)i];
-            rawFrame = _device->get_frame_data( (rs::stream)i );
-            ConvertRsframe2OpenCVMat( (rs::stream)i, rawFrame , &rawStreamData[i] );
-
-            /* Upload to Gl buffers for displaying */
-            buffers[i].upload(*_device, (rs::stream)i);
-        }
-
-        last_timestamp = timestamp;
-        ++num_frames;
-        if(timestamp >= next_time)
-        {
-            currentFps = num_frames;
-            num_frames = 0;
-            next_time += 1000;
-        }
+        cv::namedWindow( "window" , 0 );
     }
 }
 
 
-void RsCamera::uploadFrames()
+void Displayer::displayFps(int fps)
 {
-    for (auto i : supported_streams)
+    cout << "FPS: " << fps << endl;
+}
+
+
+void Displayer::displayStreams(RsCamera* camera)
+{
+    cv::Mat tmp;
+
+    for (auto i : displayed_streams)
     {
-        buffers[i].upload(*_device, (rs::stream)i);
+        tmp = cv::Mat(camera->getMat((rs::stream)i));
+
+        if( (rs::stream)i == rs::stream::depth )
+        {
+            convertDepthMat4Display( &streams_mat[(int)rs::stream::depth], tmp );
+        }
+        cv::imshow( "window", tmp );
     }
+    cvWaitKey( 1 );
+
 }
 
 
-void  RsCamera::setupWindows()
+void Displayer::displayMat(cv::Mat* frame, char* name);
 {
-    cv::namedWindow( WINDOW_DEPTH, 0 );
-    cv::namedWindow( "Thresholded", 0 );
+
+    cv::imshow( name, tmp );
 }
 
 
-void RsCamera::setupWindowsGL()
+void Displayer::convertDepthMat4Display(cv::Mat* input, cv::Mat* output);
+{
+    input->convertTo( (* output), CV_8UC1, 100.0f);
+    // applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
+}
+
+
+// void  Display::setupWindows()
+// {
+//     cv::namedWindow( WINDOW_DEPTH, 0 );
+//     cv::namedWindow( "Thresholded", 0 );
+// }
+
+
+/*void RsCamera::setupWindowsGL()
 {
     // Open a GLFW window to display our output
     glfwInit();
@@ -214,7 +279,6 @@ void RsCamera::displayStreamsGL()
 {
 
 //         glfwPollEvents();
-
     int w, h;
     glfwGetFramebufferSize(glWin, &w, &h);
     glViewport(0, 0, w, h);
@@ -252,24 +316,26 @@ void RsCamera::displayStreamsGL()
     // glDrawPixels(frameWidth, frameHeight, GL_LUMINANCE, GL_UNSIGNED_BYTE, _device->get_frame_data(rs::stream::infrared));
 
     glfwSwapBuffers(glWin);
-}
+}*/
 
-void RsCamera::convertDepthMat4Display(cv::Mat* input, cv::Mat* output)
-{
-    input->convertTo( (* output), CV_8UC1, 100.0f);
-    // applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
-}
-void RsCamera::displayStreams()
-{
-    cv::Mat tmp;
+// void RsCamera::convertDepthMat4Display(cv::Mat* input, cv::Mat* output)
+// {
+//     input->convertTo( (* output), CV_8UC1, 100.0f);
+//     // applyColorMap((* output), (* output), cv::COLORMAP_WINTER);
+// }
+// void RsCamera::displayStreams()
+// {
+//     cout<<"here3"<<endl;
 
-    convertDepthMat4Display( &rawStreamData[(int)rs::stream::depth], &tmp );
-    imshow( WINDOW_DEPTH, tmp );
-    cvWaitKey( 1 );
+//     cv::Mat tmp;
 
-    // 
-    // cv::imshow( WINDOW_RGB, rawStreamData[(int)rs::stream::color] );
-    // cvWaitKey( 1 );
+//     convertDepthMat4Display( &rawStreamData[(int)rs::stream::depth], &tmp );
+//     imshow( WINDOW_DEPTH, tmp );
+//     cvWaitKey( 1 );
 
-}
+    
+//     // cv::imshow( WINDOW_RGB, rawStreamData[(int)rs::stream::points] );
+//     // cvWaitKey( 1 );
+
+// }
 
