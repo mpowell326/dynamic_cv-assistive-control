@@ -10,27 +10,37 @@ void ObjectDetector::setCamera(RsCamera* ptr)
 	camera =  ptr;
 }
 
+// bool ObjectDetector::isObscured()
+// {
+// 	Mat depthFrame = (* camera->getMat(rs::stream::depth));
+
+// }
+
+
 bool ObjectDetector::isObjectClose()
 {
-	Mat depthFrame = (* camera->getDepthFrame() );
+	// Mat depthFrame = (* camera->getDepthFrame() );
+	Mat depthFrame = (* camera->getMat(rs::stream::depth));
 	Mat output;
 
-	const float distance = 2;
+	const float distance = 200;
 
 
-	//apply otsu thresholding
+	//apply  thresholding
 	cv::threshold(depthFrame, output, distance, distance, THRESH_TOZERO_INV);
 	
 	float mean = cv::mean(output)[0];
 	cout<<mean<<endl;
-	convertDepthMat4Display(&output,&output);
+	
 
-	cv::imshow( "Thresholded", output );
-	waitKey(1);	
+	// convertRsFrame2Mat(&output,&output);
+
+	// cv::imshow( "Thresholded", output );
+	// waitKey(1);	
 
 
 	/* Is object likely closer than 'distance = 2m' to camera. */
-	if (mean > 0.08) 
+	if (mean > 20) 
 	{
 		return true;
 	}
@@ -42,7 +52,8 @@ bool ObjectDetector::isObjectClose()
 
 void ObjectDetector::findSegments()
 {
-	Mat depthFrame = (* camera->getDepthFrame());
+	// Mat depthFrame = (* camera->getDepthFrame());
+	Mat depthFrame = (* camera->getMat(rs::stream::depth));
 	Mat fg;
 	cv::erode(depthFrame,fg,cv::Mat(),cv::Point(-1,-1),6);
 
@@ -61,24 +72,25 @@ void ObjectDetector::findSegments()
 	// segmenter.process(markers);
 
 	Mat tmp = segmenter.getSegmentation();
-	convertDepthMat4Display(&tmp,&markers);
+	// convertRsFrame2Mat(&tmp,&markers);
 
-	cv::imshow( "Segmented Image", markers );
-	waitKey(1);	
+	// cv::imshow( "Segmented Image", markers );
+	// waitKey(1);	
 }
 
 
 void ObjectDetector::findBlobs()
 {
 	// Read image
-	Mat depthFrame = (* camera->getDepthFrame());
+	// Mat depthFrame = (* camera->getDepthFrame());
+	Mat depthFrame = (* camera->getMat(rs::stream::depth));
 	Mat im;
 	const float distance = 2;
 
 
 	//apply otsu thresholding
 	cv::threshold(depthFrame, im, distance, distance, THRESH_TOZERO_INV);
-	convertDepthMat4Display(&im,&im);
+	// convertDepthMat4Display(&im,&im);
 
 	// Setup SimpleBlobDetector parameters.
 	SimpleBlobDetector::Params params;

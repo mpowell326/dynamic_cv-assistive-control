@@ -17,7 +17,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <librealsense/rs.hpp>
-#include "TextureBuffer.hpp"
+// #include "TextureBuffer.hpp"
+#include <cstdio>
 using namespace std;
 // using namespace rs;
 
@@ -25,16 +26,7 @@ using namespace std;
 #include <GLFW/glfw3.h>
 
 
-std::vector<uint16_t> enabled_streams = {   (uint16_t)rs::stream::depth,
-                                            (uint16_t)rs::stream::color,
-                                            (uint16_t)rs::stream::infrared,
-                                            (uint16_t)rs::stream::points,
-                                        };
 
-std::vector<uint16_t> displayed_streams = { (uint16_t)rs::stream::depth,
-                                            (uint16_t)rs::stream::color,
-                                            (uint16_t)rs::stream::points
-                                        };
 
 
 
@@ -70,14 +62,16 @@ private:
 class Displayer
 {
 public:
+                Displayer(RsCamera* rsCamera);
     void        initializeWindows();
     void        displayFps(int fps);
-    void        displayStreams(RsCamera* camera);
-    void        displayMat(cv::Mat* frame);
+    void        displayStreams();
+    void        displayMat(cv::Mat* frame, char* name);
 
 private:
     void        convertDepthMat4Display(cv::Mat* input, cv::Mat* output);
 
+    RsCamera*               camera;
     std::vector<uint16_t>   windows;
 };
 
