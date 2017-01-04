@@ -17,6 +17,7 @@ public:
     bool isObjectClose();
     void findSegments();
     void findBlobs();
+    void findFloor();
     
 private:
 	RsCamera*  camera;

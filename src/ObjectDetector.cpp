@@ -50,6 +50,27 @@ bool ObjectDetector::isObjectClose()
 	}
 }
 
+void ObjectDetector::findFloor()
+{
+	Mat depthFrame = (* camera->getMat(rs::stream::depth));
+	Mat infrared = (* camera->getMat(rs::stream::infrared));
+	Mat output;
+	Mat contours;
+
+	// cv::dilate(depthFrame,output,cv::Mat(),cv::Point(-1,-1),6);
+	cv::medianBlur(output, output, 13);
+	cv::dilate(depthFrame, output, cv::Mat(), cv::Point(-1, -1), 5);
+	// cv::erode(output, output, cv::Mat(), cv::Point(-1, -1), 9);
+	cv::medianBlur(output, output, 3);
+
+
+	// cv::Canny(infrared,contours,35,90);
+
+	cv::imshow( "Median Blur", output );
+	// cv::imshow( "Cany Edge Detector", output + contours );
+	waitKey(1);	
+}
+
 void ObjectDetector::findSegments()
 {
 	// Mat depthFrame = (* camera->getDepthFrame());

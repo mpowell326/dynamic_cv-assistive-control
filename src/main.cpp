@@ -27,9 +27,11 @@ int main( ) try
     while( true )
     {
         rsCamera.getNextFrame();
-        cout<<"Close? "<<objectDetector.isObjectClose()<<endl;
-        // display.displayFps(rsCamera.getFps());
+        // cout<<"Close? "<<objectDetector.isObjectClose()<<endl;
+        display.displayFps(rsCamera.getFps());
         display.displayStreams();
+
+        objectDetector.findFloor();
 
     }
 
