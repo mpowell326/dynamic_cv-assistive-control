@@ -67,11 +67,11 @@ find_package( OpenCV REQUIRED )
 
 # Add Aruco library used for marker tracking/detection
 # -------------------------------------------------------------------------
-find_library(ARUCO_LIB NAMES libaruco.so REQUIRED
-        PATHS /usr/local/lib )
+#find_library(ARUCO_LIB NAMES libaruco.so REQUIRED
+#        PATHS /usr/local/lib )
 
-include_directories(${ARUCO_INCLUDE_DIR})
-list(APPEND DEPENDENCIES m aruco)
+#include_directories(${ARUCO_INCLUDE_DIR})
+#list(APPEND DEPENDENCIES m aruco)
 
 
 # Add executables and link libraries
