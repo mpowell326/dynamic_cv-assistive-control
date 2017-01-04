@@ -51,7 +51,7 @@ private:
     std::vector<cv::Mat>    streams_mat;
 
     /* FPS tracking */
-    double                  last_timestamp;
+    double                  last_timestamp=-1;
     int                     currentFps=0, num_frames=0;
     double                  next_time;
 
