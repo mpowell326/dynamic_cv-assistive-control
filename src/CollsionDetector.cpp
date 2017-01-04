@@ -20,14 +20,14 @@ void CollisionDetector::start()
     rs::log_to_console( rs::log_severity::warn );
 
     cout<<"starting"<<endl;
-    if( !rsCamera.initializeStreaming() )
+    if( !rsCamera.startStreaming() )
     {
         std::cout << "Unable to locate a camera" << std::endl;
         rs::log_to_console( rs::log_severity::fatal );
         // return EXIT_FAILURE;
     }
 
-    rsCamera.setupWindows();
+    // rsCamera.setupWindows();
 }
 
 
@@ -39,10 +39,10 @@ void CollisionDetector::update()
 
 	    rsCamera.getNextFrame();
 	    isClose = objectDetector.isObjectClose();
-	    rsCamera.displayStreams();
+	    // rsCamera.displayStreams();
 
 	    // rsCamera.displayStreamsGL();
-	    rsCamera.displayFPS();
+	    // rsCamera.displayFPS();
 
     }
     catch( const rs::error & e )
@@ -65,7 +65,7 @@ CollisionDetector::~CollisionDetector()
 
 void CollisionDetector::stop()
 {
-    rsCamera.disableStreaming();
+    rsCamera.stopStreaming();
     cv::destroyAllWindows( );
     // return EXIT_SUCCESS;
 }

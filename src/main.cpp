@@ -8,38 +8,34 @@
 /////////////////////////////////////////////////////////////////////////////
 int main( ) try
 {
-    // rs::context rsContex; 
-    // RsCamera  rsCamera(&rsContex);
     RsCamera rsCamera;
     ObjectDetector objectDetector(&rsCamera);
+    Displayer display(&rsCamera);
 
     rs::log_to_console( rs::log_severity::warn );
 
 
-    if( !rsCamera.initializeStreaming( ) )
+    if( !rsCamera.startStreaming( ) )
     {
         std::cout << "Unable to locate a camera" << std::endl;
         rs::log_to_console( rs::log_severity::fatal );
         return EXIT_FAILURE;
     }
 
-    rsCamera.setupWindows();
-    // rsCamera.setupWindowsGL();
+    display.initializeWindows();
 
     while( true )
     {
-        // if( rsCamera._device->is_streaming( ) )
-
         rsCamera.getNextFrame();
-        objectDetector.isObjectClose();
-        objectDetector.findBlobs();
-        rsCamera.displayStreams();
-        
-        // rsCamera.displayStreamsGL();
-        rsCamera.displayFPS();
+        // cout<<"Close? "<<objectDetector.isObjectClose()<<endl;
+        display.displayFps(rsCamera.getFps());
+        display.displayStreams();
+
+        objectDetector.findFloor();
+
     }
 
-    rsCamera.disableStreaming();
+    rsCamera.stopStreaming();
     cv::destroyAllWindows( );
     return EXIT_SUCCESS;
 
