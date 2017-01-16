@@ -17,39 +17,49 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <librealsense/rs.hpp>
-// #include "TextureBuffer.hpp"
+
+#include <pcl/common/common_headers.h>
+#include <pcl/common/transforms.h>
+#include <pcl/point_types.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/pcl_plotter.h>
+
 #include <cstdio>
 using namespace std;
-// using namespace rs;
 
 // Also include GLFW to allow for graphical display
 #include <GLFW/glfw3.h>
 
 
 
-
+#define HDR_ENABLED false
+#define NOISY_DISTANCE 6.0
+#define MAX_RANGE      4.0
 
 
 
 class RsCamera : public Camera
 {
 public:
-                RsCamera();
+                RsCamera()
+                : rsCloudPtr(new pcl::PointCloud<pcl::PointXYZRGB>) {}
     void        setParams();
     bool        startStreaming();
     void        stopStreaming();
     void        getNextFrame();
     int         getFps();
     cv::Mat*    getMat(rs::stream stream);
-    
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr getPointCloud() {return rsCloudPtr;}
 private:
     void        convertRsFrame2Mat( rs::stream stream, const void* rsData, cv::Mat *outMat );
+    int         generatePointCloud( pcl::PointCloud<pcl::PointXYZRGB>::Ptr rs_cloud_ptr );
 
 
     rs::context             _rsCtx;             // Create a context object. This object owns the handles to all connected realsense devices.
     rs::device*             _device = NULL;
     std::vector<cv::Mat>    streams_mat;
-
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr            rsCloudPtr;
+    
     /* FPS tracking */
     double                  last_timestamp=-1;
     int                     currentFps=0, num_frames=0;
@@ -59,10 +69,35 @@ private:
 
 
 
+class PCLViewer
+{
+public:
+                                                        PCLViewer();
+                                                        ~PCLViewer();
+    template <typename PointT> void                     addRGBCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size );
+    template <typename PointT> void                     addXYZCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size, int r, int g, int b );
+    void                                                updatePlot(std::vector<std::vector<std::pair<double, double>>> &obstacles);
+    void                                                display();
+
+
+private:
+    std::shared_ptr<pcl::visualization::PCLVisualizer>  createPointCloudWindow();
+    std::shared_ptr<pcl::visualization::PCLPlotter>     createPlotterWindow();
+
+
+    /* ==== Cloud Visualiser ==== */
+    std::shared_ptr<pcl::visualization::PCLVisualizer>  pclVisualizer; 
+    std::shared_ptr<pcl::visualization::PCLPlotter>     plotter;
+    std::vector<std::pair<std::string, pcl::PointCloud<pcl::PointXYZ>::ConstPtr>>   pointCloudsXYZ;
+    std::vector<std::pair<std::string, pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr>>   pointCloudsRGB;
+    // std::vector<std::pair<double, double>>              plotter_data;
+};
+
+
 class Displayer
 {
 public:
-                Displayer(RsCamera* rsCamera);
+                Displayer(RsCamera* rsCamera); 
     void        initializeWindows();
     void        displayFps(int fps);
     void        displayStreams();

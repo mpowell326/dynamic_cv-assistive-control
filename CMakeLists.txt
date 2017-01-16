@@ -65,6 +65,16 @@ find_library( REALSENSE_LIBRARIES NAMES librealsense.so
 find_package( OpenCV REQUIRED )
 
 
+#Add PCL library
+# -------------------------------------------------------------------------
+find_package( PCL 1.7 REQUIRED )
+include_directories( ${PCL_INCLUDE_DIRS} /user/local/include )
+link_directories( ${PCL_LIBRARY_DIRS} /usr/local/lib /usr/lib/x86_64-linux-gnu )
+add_definitions( ${PCL_DEFINITIONS} )
+
+
+
+
 # Add Aruco library used for marker tracking/detection
 # -------------------------------------------------------------------------
 #find_library(ARUCO_LIB NAMES libaruco.so REQUIRED
@@ -94,8 +104,7 @@ find_package( OpenCV REQUIRED )
 
 # Main collision avoidance program:
 add_executable( bin/collision src/Camera.cpp src/ObjectDetector.cpp src/RsCamera.cpp src/main.cpp )
-target_link_libraries( bin/collision ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
-  
+target_link_libraries( bin/collision ${OpenCV_LIBS} realsense ${DEPENDENCIES} ${PCL_LIBRARIES} ${PCL_IO_LIBRARIES} )
 
 
 # link Python wrapper/package with Boost and create libraries

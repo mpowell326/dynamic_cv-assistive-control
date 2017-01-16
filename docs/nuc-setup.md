@@ -71,3 +71,25 @@ Then follow the [install instructions](https://github.com/IntelRealSense/libreal
 
 __Note:__
 Make sure that the linux-headers, kernel, etc. have matching versions.
+
+
+## PCL
+Install dependencies:
+- boost (min 1.4, but needed 1.58 with pcl1.8) `sudo apt-get install libboost1.58.0-all`
+- eigen `sudo apt-get install libeigen3-dev`
+- flann `sudo apt-get install libflann-dev`
+- vtk (download 1.8 from http://www.vtk.org/)
+
+Download pcl
+
+    wget https://github.com/PointCloudLibrary/pcl/archive/pcl-1.8.0.tar.gz
+    tar xvf pcl-1.8.0.tar.gz
+
+Make and install pcl library:
+
+    cd pcl-1.8.0
+    mkdir build
+    cd build
+    cmake -DCMAKE_BUILD_TYPE=Release ..
+    sudo make -j2
+    sudo make install
