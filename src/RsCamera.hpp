@@ -76,6 +76,7 @@ public:
                                                         ~PCLViewer();
     template <typename PointT> void                     addRGBCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size );
     template <typename PointT> void                     addXYZCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size, int r, int g, int b );
+    void                                                updatePlot(std::vector<std::pair<double, double>> &obstacles);
     void                                                updatePlot(std::vector<std::vector<std::pair<double, double>>> &obstacles);
     void                                                display();
 

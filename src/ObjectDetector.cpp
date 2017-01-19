@@ -3,7 +3,10 @@
 #define CAMERA_HEIGHT   0.6 // Camera mounting offset from floor (m)
 #define CAMERA_ANGLE    20.0  // Camera mounting angle (deg). Positive is rotated torwards ground.
 #define VOXEL_LEAFSIZE  0.02f
-#define FLOOR_ANGLE_EPS 10.0
+#define FLOOR_ANGLE_EPS 20.0
+
+#define ROUNDF(f, c) (((float)((int)((f) * (c))) / (c)))
+
 
 ObjectDetector::ObjectDetector(){}
 ObjectDetector::ObjectDetector(RsCamera* ptr)
@@ -181,57 +184,80 @@ void ObjectDetector::cluster2Dcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, s
 
         //Generate data
         std::vector<std::pair<double, double>>  obstacle;
-        generateObstacleDistancesVector( cloud_cluster, obstacle);    
+        generateObstacleMap_cart( cloud_cluster, obstacle);    
         plotData.push_back(obstacle);   
     }
 }
 
 
 
-// void ObjectDetector::findObstacles(pcl::PointCloud<pcl::PointXYZRGB>::Ptr xyxrgb_cloud, std::vector<std::pair<double, double>> osbtacle_map )
-// {
-//     pcl::PointCloud<pcl::PointXYZ>::Ptr                 filteredCloud(  new pcl::PointCloud<pcl::PointXYZ>);
-//     pcl::PointCloud<pcl::PointXYZ>::Ptr                 floor_area_cloud(   new pcl::PointCloud<pcl::PointXYZ>);
-//     pcl::PointCloud<pcl::PointXYZ>::Ptr                 obstacles_cloud(    new pcl::PointCloud<pcl::PointXYZ>);
-
-//      Transform input cloud to account for camera mounting 
-// 	transform(xyxrgb_cloud,  xyxrgb_cloud);
-
-// 	/* Filter point cloud to remove noise and downsample */
-// 	convertRGBtoXYZ(xyxrgb_cloud, filteredCloud);
-// 	applyVoxelGrid(filteredCloud, VOXEL_LEAFSIZE);
-// 	applyPassThroughZ(filteredCloud, MAX_RANGE);
-// 	removeOutliers(filteredCloud);
-
-// 	/* Detect the floor plane */
-// 	findFloor(filteredCloud, floor_area_cloud, obstacles_cloud);
-// 	flattenCloud(obstacles_cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr flattened_cloud);
-// 	cluster2dcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, osbtacle_map );
-// }
-
 
 //===================================================================
 // Populate distance to obstacles vector given 2d map
 //===================================================================
-void ObjectDetector::generateObstacleDistancesVector( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<double, double> >  &plot_data)
+void ObjectDetector::generateObstacleMap_cart( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<double, double> >  &plot_data)
 {
     int i;
     double angle, distance, x, z;
     plot_data.clear();
 
-    for ( i=0; i<=cloud->points.size(); i++ )
+    for ( i=0; i<cloud->points.size(); i++ )
     {
         x = cloud->points[i].x;
         z = cloud->points[i].z;
 
         angle = - atan2(x,z) * 360 /(2*M_PI);
         distance = sqrt(x*x + z*z);
-        plot_data.push_back( std::pair<double, double> (angle, distance));
+        // plot_data.push_back( std::pair<double, double> (angle, distance));
+        plot_data.push_back( std::pair<double, double> (cloud->points[i].x, cloud->points[i].z));
+    }
+}
+
+//===================================================================
+// Populate distance to obstacles vector given 2d map
+//===================================================================
+void ObjectDetector::generateObstacleMap_rad( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<int, int> >  &plot_data)
+{
+    int i, angle, distance;
+    double x, z;
+    plot_data.clear();
+
+    for ( i=0; i<cloud->points.size(); i++ )
+    {
+        x = cloud->points[i].x;
+        z = cloud->points[i].z;
+
+        angle = - atan2(x,z) * 360 /(2*M_PI);
+        distance = sqrt(x*x + z*z)*100;
+        plot_data.push_back( std::pair<int, int> (angle, distance));
     }
 }
 
 
+// ===================================================================
+// Populate a obstacle map
+// ===================================================================
+template void ObjectDetector::generateObstacleMap_grid<int>( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector <std::vector<int> >& obstacle_map, int map_width, int map_depth);    
+template <typename T> void ObjectDetector::generateObstacleMap_grid( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector <std::vector<T> >& obstacle_map, int map_width, int map_depth)
+{
+	int x,z;
 
+	// for(typeof(container.begin()) it = container.begin(); it != container.end(); it++) 
+	for (std::vector<std::vector<int>>::iterator i=obstacle_map.begin(); i != obstacle_map.end(); ++i)
+	{
+		std::fill(i->begin(), i->end(), 0);
+	}
+
+    for ( int i=0; i<cloud->points.size(); i++ )
+    {
+    	x = (int) (cloud->points[i].x * 100);		//Convert to cm
+    	z = (int) (cloud->points[i].z * 100);
+    	if( x>=-(map_width/2) && x<(map_width/2) && z>=0 && z<map_depth )
+    	{
+    		obstacle_map[x + map_width/2][z] = 1;
+    	}
+    }
+}
 
 
 

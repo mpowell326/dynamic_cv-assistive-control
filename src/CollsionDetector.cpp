@@ -12,22 +12,16 @@
 
 void CollisionDetector::start()
 {
-    // rs::context rsContex; 
-    // RsCamera  rsCamera(&rsContex);
-    
-    objectDetector.setCamera(&rsCamera);
-
     rs::log_to_console( rs::log_severity::warn );
 
-    cout<<"starting"<<endl;
-    if( !rsCamera.startStreaming() )
+    if( !rsCamera.startStreaming( ) )
     {
         std::cout << "Unable to locate a camera" << std::endl;
         rs::log_to_console( rs::log_severity::fatal );
         // return EXIT_FAILURE;
     }
 
-    // rsCamera.setupWindows();
+    // display.initializeWindows();
 }
 
 
@@ -35,14 +29,51 @@ void CollisionDetector::update()
 {
 	try
 	{
-	    // if( rsCamera._device.is_streaming( ) )
+        /* ==== Get next frames (color, depth, point cloud, etc. ) ==== */
+        rsCamera.getNextFrame();
 
-	    rsCamera.getNextFrame();
-	    isClose = objectDetector.isObjectClose();
-	    // rsCamera.displayStreams();
 
-	    // rsCamera.displayStreamsGL();
-	    // rsCamera.displayFPS();
+
+        /* ==== Point Cloud Processing, etc. ==== */
+
+        pcl::copyPointCloud<pcl::PointXYZRGB, pcl::PointXYZRGB>(* rsCamera.getPointCloud(), *xyzrgb_cloud ) ;
+
+        /* Downsample to increase fps */
+        objectDetector.applyVoxelGrid(xyzrgb_cloud, VOXEL_LEAFSIZE);
+        objectDetector.convertRGBtoXYZ(xyzrgb_cloud, filteredCloud);
+
+        /* Transform input cloud to account for camera mounting */
+        objectDetector.transform(filteredCloud,  filteredCloud);
+
+        /* Filter point cloud to remove noise */
+        objectDetector.applyPassThroughZ(filteredCloud, MAX_RANGE);
+        objectDetector.removeOutliers(filteredCloud);
+
+        /* Detect the floor plane */
+        objectDetector.findFloor(filteredCloud, floor_area_cloud, obstacles_cloud);
+        objectDetector.flattenCloud(obstacles_cloud, flattened_cloud);
+        // objectDetector.cluster2Dcloud(flattened_cloud, obstacle_map );
+        objectDetector.generateObstacleMap_grid<int>( obstacles_cloud, obstacle_map, mapWidth, mapDepth );
+
+        std::vector<std::pair<double, double>> obstacle_plot;
+        obstacle_plot.clear();
+        for(int i = 0; i < mapWidth; i++)
+        {
+            for( int j=0; j<mapDepth; j++)
+            {
+                if( obstacle_map[i][j] == 1)
+                {
+                    obstacle_plot.push_back(std::pair<double, double> (i, j));
+                }
+            }
+        }
+        // pclViewer.updatePlot(obstacle_plot);
+
+        /* ==== Display streams, clouds, plots ==== */
+        display.displayFps(rsCamera.getFps());
+        // pclViewer.updatePlot(obstacle_map);
+        pclViewer.display();
+        // display.displayStreams();
 
     }
     catch( const rs::error & e )
@@ -59,8 +90,8 @@ void CollisionDetector::update()
 
 CollisionDetector::~CollisionDetector()
 {
-    // rsCamera.disableStreaming();
-    // cv::destroyAllWindows();
+    rsCamera.stopStreaming();
+    cv::destroyAllWindows();
 }
 
 void CollisionDetector::stop()

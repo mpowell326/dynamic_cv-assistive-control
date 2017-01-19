@@ -135,8 +135,8 @@ IF(Boost_FOUND)
     # ADD_LIBRARY(_arucoTracker SHARED src/arucoMarkerTracker.cpp src/RgbCamera.cpp)
     # TARGET_LINK_LIBRARIES(_arucoTracker ${Boost_LIBRARIES}  ${ARUCO_LIB} ${OpenCV_LIBS}) #${BOOST_PYTHON}
 
-    # ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
-    # TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} )
+    ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
+    TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} ${PCL_LIBRARIES} ${PCL_IO_LIBRARIES} )
 
 
   ELSEIF(NOT Boost_FOUND)

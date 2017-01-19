@@ -49,7 +49,9 @@ public:
 	void flattenCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, pcl::PointCloud<pcl::PointXYZ>::Ptr flattened_cloud);
 	void cluster2Dcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, std::vector<std::vector<std::pair<double, double>>> &plotData );
 	
-	void generateObstacleDistancesVector( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<double, double> >  &plot_data);
+	void generateObstacleMap_cart( 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<double, double> >  &plot_data);
+	void generateObstacleMap_rad( 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<int, int> >  &plot_data);
+	template <typename T> void generateObstacleMap_grid( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector <std::vector<T> >& obstacle_map, int map_width, int map_depth);
 
 
 
@@ -63,6 +65,30 @@ private:
 	RsCamera*  camera;
 	// cv::SimpleBlobDetector blobDetector;
 };
+
+
+// struct Point{
+// 	int x;
+// 	int y;
+// 	bool obstacle;
+// };
+
+// struct Map {
+// 	int width;
+// 	int height;
+
+// 	Point* grid[width][height];
+// }
+
+
+
+
+
+
+
+
+
+
 
 
 class WatershedSegmenter {
