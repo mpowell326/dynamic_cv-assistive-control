@@ -3,6 +3,7 @@
 #define OBJECT_DETECTOR_H
 
 #include "RsCamera.hpp"
+#include "common.hpp"
 
 #include <pcl/common/common_headers.h>
 #include <pcl/visualization/pcl_visualizer.h>
@@ -48,11 +49,18 @@ public:
 	void findFloor(pcl::PointCloud<pcl::PointXYZ>::Ptr input, pcl::PointCloud<pcl::PointXYZ>::Ptr floor_cloud, pcl::PointCloud<pcl::PointXYZ>::Ptr obstacles_cloud);
 	void flattenCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, pcl::PointCloud<pcl::PointXYZ>::Ptr flattened_cloud);
 	void cluster2Dcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, std::vector<std::vector<std::pair<double, double>>> &plotData );
+	void clusterAndJoin2Dcloud(pcl::PointCloud<pcl::PointXYZ>::Ptr input, pcl::PointCloud<pcl::PointXYZ>::Ptr output);
 	
+
 	void generateObstacleMap_cart( 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<double, double> >  &plot_data);
 	void generateObstacleMap_rad( 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector<std::pair<int, int> >  &plot_data);
 	template <typename T> void generateObstacleMap_grid( pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, std::vector <std::vector<T> >& obstacle_map, int map_width, int map_depth);
+	int scanline( std::vector <std::vector<int> >& obstacle_map, int x, int z, int dx, int dz, int step_x, int step_z, int max_distance);
+	int checkCollision( std::vector <std::vector<int> >& obstacle_map, double angle, double max_distance);
+	std::pair<int, int> calculate_vel_restriction(std::vector <std::vector<int> >& obstacle_map, int jsXdemand, int jsYdemand);
+	std::pair<int, int> calculate_vel_restriction2(std::vector <std::vector<int> >& obstacle_map, double vel_linear, double vel_turn, int dt);
 
+	int y_restrict=0;
 
 
 	/* Image processing Function */

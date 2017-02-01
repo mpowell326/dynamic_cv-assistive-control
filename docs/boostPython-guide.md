@@ -4,7 +4,7 @@ Use boost libraries to create a python usable library from c/c++ source code.
 
 Refer to [boost website](http://www.boost.org/doc/libs/1_62_0/libs/python/doc/html/tutorial/index.html ) for full tutorial.
 
-#### Expose C++ code to python with Boost.Python wrapper
+## Expose C++ code to python with Boost.Python wrapper
 To expose a C++ class need to add a wrapper / BOOST_PYTHON_MODULE. This can be in a seperate file or added to the C++ header file.
 
 Need to the following includes to your .cxx file:
@@ -86,7 +86,86 @@ import lib_MODULENAME
 class_instance = lib_MODULENAME.classinit()
 ```
 
-
 ##### Possibly useful:
 - https://wiki.python.org/moin/boost.python/HowTo
 - use `nm -D lib_<modulename>.so | grep <modulename>` to give you the name of your init functinowithin the library
+
+
+
+
+
+
+## Embedding python code in C++
+Going in the reverse direction (python to c++) is not as well supported by boost but can still be done.
+
+Need to include:
+    #include <boost/python.hpp>
+    #include <Python.h>
+
+#### Setup environment and create class object
+```c++
+setenv("PYTHONPATH", "/home/morgan/src/unidrive-edit/lib/platform/tools/can/", 1);
+
+/* Initalize python-can interface */
+Py_Initialize();
+
+/* Initalize various objects used */
+boost::python::object main_module, main_namespace, canCameraInteraface_module, canCameraInteraface,temp;
+
+/* Import main module and namespace */
+main_module = boost::python::import("__main__");
+assert(main_module);
+main_namespace = main_module.attr("__dict__");
+assert(main_namespace);
+
+/* Import our python can interface/class */
+exec(
+       "import camera_can_interface\n"
+       "canCameraInteraface = camera_can_interface.CanCameraInteraface()\n"
+     , main_namespace
+   );
+
+/* Create an instance of the python class in the main namespace */
+canCameraInteraface = main_namespace["canCameraInteraface"];
+
+```
+
+#### Execute functions
+```c++
+/* Get the joystick demands from the CAN bus */
+canCameraInteraface.attr("updateJsDemands")();
+xDemand = boost::python::extract<int>(   canCameraInteraface.attr("getJsXdemand")()  )();
+yDemand = boost::python::extract<int>(   canCameraInteraface.attr("getJsYdemand")()  )();
+```
+
+#### Python Garbage Collector
+Python will delete objects when it thinks they are no longer needed (with the garbage collector referenced to in the [gc module](https://docs.python.org/2/library/gc.html)). This can be prevented over-riding the default \__del\__() method (or by possibly increasing the objects reference count).
+
+
+```python
+def __del__(self):
+    print("trying to delete")
+```
+
+http://stackoverflow.com/questions/6315244/how-to-give-object-away-to-python-garbage-collection
+http://stackoverflow.com/questions/8025888/does-python-gc-deal-with-reference-cycles-like-this
+
+#### Catch python error-use-of-deleted-function
+```c++
+try
+{
+  ...
+}
+catch( boost::python::error_already_set )
+{
+    PyErr_Print();
+}
+```
+
+#### Possible useful:
+http://thejosephturner.com/blog/post/embedding-python-in-c-applications-with-boostpython-part-1/
+http://members.gamedev.net/sicrane/articles/EmbeddingPythonPart1.html
+https://wiki.python.org/moin/boost.python/EmbeddingPython
+http://www.boost.org/doc/libs/1_62_0/libs/python/doc/html/tutorial/tutorial/embedding.html
+https://wiki.python.org/moin/boost.python/HowTo
+https://cs.brown.edu/~jwicks/boost/libs/python/doc/tutorial/doc/html/python/embedding.html

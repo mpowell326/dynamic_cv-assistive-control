@@ -14,6 +14,7 @@
 
 
 #include "Camera.hpp"
+#include "common.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <librealsense/rs.hpp>
@@ -34,7 +35,6 @@ using namespace std;
 
 #define HDR_ENABLED false
 #define NOISY_DISTANCE 6.0
-#define MAX_RANGE      4.0
 
 
 
@@ -76,6 +76,8 @@ public:
                                                         ~PCLViewer();
     template <typename PointT> void                     addRGBCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size );
     template <typename PointT> void                     addXYZCloud( typename pcl::PointCloud<PointT>::Ptr cloud, const char* id, int size, int r, int g, int b );
+    void                                                clearPlot();
+    void                                                plot(double *array_X, double *array_Y);
     void                                                updatePlot(std::vector<std::pair<double, double>> &obstacles);
     void                                                updatePlot(std::vector<std::vector<std::pair<double, double>>> &obstacles);
     void                                                display();

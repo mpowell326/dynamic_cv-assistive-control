@@ -42,7 +42,7 @@ To connect the nuc directly to a pc via an ethernet cable (i.e. no router,etc.)[
         }
 4. Restart server: `/etc/init.d/ics-dhcp3-server restart`
 ## OpenCV
-Download OpenCV (using OpenCV 2.4.13). [Linux install](http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html)
+Download OpenCV (using OpenCV 2.4.13 or OpenCV 3). [Linux install](http://docs.opencv.org/2.4/doc/tutorials/introduction/linux_install/linux_install.html)
 
 __Required Packages__
 

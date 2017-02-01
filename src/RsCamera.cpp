@@ -118,21 +118,21 @@ void RsCamera::setParams()
 
 
 
-    // _device->set_option(rs::option::r200_lr_auto_exposure_enabled                   , 1); 
-    // _device->set_option(rs::option::r200_lr_gain                                    , 100);
-    // _device->set_option(rs::option::r200_lr_exposure                                , 164); 
-    // _device->set_option(rs::option::r200_emitter_enabled                            , 1);
-    // _device->set_option(rs::option::r200_depth_units                                , 1000);
-    // _device->set_option(rs::option::r200_depth_control_estimate_median_decrement    , 43);
-    // _device->set_option(rs::option::r200_depth_control_estimate_median_increment    , 0);
-    // _device->set_option(rs::option::r200_depth_control_median_threshold             , 0);
-    // _device->set_option(rs::option::r200_depth_control_score_minimum_threshold      , 0);
-    // _device->set_option(rs::option::r200_depth_control_score_maximum_threshold      , 555);
-    // _device->set_option(rs::option::r200_depth_control_texture_count_threshold      , 6);
-    // _device->set_option(rs::option::r200_depth_control_texture_difference_threshold , 14);
-    // _device->set_option(rs::option::r200_depth_control_second_peak_threshold        , 19);
-    // _device->set_option(rs::option::r200_depth_control_neighbor_threshold           , 0);
-    // _device->set_option(rs::option::r200_depth_control_lr_threshold                 , 9); 
+    _device->set_option(rs::option::r200_lr_auto_exposure_enabled                   , 1); 
+    _device->set_option(rs::option::r200_lr_gain                                    , 100);
+    _device->set_option(rs::option::r200_lr_exposure                                , 164); 
+    _device->set_option(rs::option::r200_emitter_enabled                            , 1);
+    _device->set_option(rs::option::r200_depth_units                                , 1000);
+    _device->set_option(rs::option::r200_depth_control_estimate_median_decrement    , 43);
+    _device->set_option(rs::option::r200_depth_control_estimate_median_increment    , 0);
+    _device->set_option(rs::option::r200_depth_control_median_threshold             , 0);
+    _device->set_option(rs::option::r200_depth_control_score_minimum_threshold      , 0);
+    _device->set_option(rs::option::r200_depth_control_score_maximum_threshold      , 555);
+    _device->set_option(rs::option::r200_depth_control_texture_count_threshold      , 6);
+    _device->set_option(rs::option::r200_depth_control_texture_difference_threshold , 14);
+    _device->set_option(rs::option::r200_depth_control_second_peak_threshold        , 19);
+    _device->set_option(rs::option::r200_depth_control_neighbor_threshold           , 0);
+    _device->set_option(rs::option::r200_depth_control_lr_threshold                 , 9); 
 
 }
 
@@ -155,7 +155,7 @@ bool RsCamera::startStreaming()
 
 
         /* Configure all streams */
-        rs::preset stream_preset = rs::preset::highest_framerate;   //best_quality, largest_image, highest_framerate
+        rs::preset stream_preset = rs::preset::best_quality;   //best_quality, largest_image, highest_framerate
 
         // _device->enable_stream(rs::stream::depth, 0, 0, rs::format::z16, fps, rs::output_buffer_format::native);
         // _device->enable_stream(rs::stream::color, frameWidth, frameHeight, rs::format::rgb8, fps, rs::output_buffer_format::native);
@@ -567,8 +567,8 @@ std::shared_ptr<pcl::visualization::PCLPlotter> PCLViewer::createPlotterWindow()
     /* === Setup Plotter ==== */
     std::shared_ptr<pcl::visualization::PCLPlotter> plotter( new pcl::visualization::PCLPlotter () );
     // plotter->setXRange (-40.0, 40.0);
-    plotter->setXRange (-2.0, 2.0);
-    plotter->setYRange (0, MAX_RANGE);
+    plotter->setXRange (0, 400);
+    plotter->setYRange (0, 400);
     plotter->setXTitle("Angle (deg)");
     plotter->setYTitle("Distance (m)");
 
@@ -595,10 +595,18 @@ template <typename PointT> void PCLViewer::addXYZCloud(typename pcl::PointCloud<
 
 }
 
+void PCLViewer::clearPlot()
+{
+    plotter->clearPlots();
+}
+
+void PCLViewer::plot(double *array_X, double *array_Y)
+{
+    plotter->addPlotData(array_X, array_Y, 2, "Velocity");
+}
 
 void PCLViewer::updatePlot(std::vector<std::pair<double, double>> &obstacles)
 {
-    plotter->clearPlots();
     plotter->addPlotData (obstacles,"Distance to Osbtacle",vtkChart::POINTS);
 }
 

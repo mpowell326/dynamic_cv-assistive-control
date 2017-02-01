@@ -72,7 +72,7 @@ void CollisionDetector::update()
         /* ==== Display streams, clouds, plots ==== */
         display.displayFps(rsCamera.getFps());
         // pclViewer.updatePlot(obstacle_map);
-        pclViewer.display();
+        // pclViewer.display();
         // display.displayStreams();
 
     }

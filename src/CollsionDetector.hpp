@@ -3,12 +3,9 @@
 
 #include "RsCamera.hpp"
 #include "ObjectDetector.hpp"
+#include "common.hpp"
 
 
-#define CAMERA_HEIGHT   0.6 // Camera mounting offset from floor (m)
-#define CAMERA_ANGLE    20.0  // Camera mounting angle (deg). Positive is rotated torwards ground.
-#define VOXEL_LEAFSIZE  0.02f
-#define FLOOR_ANGLE_EPS 30.0
 
 
 
@@ -24,7 +21,8 @@ public:
         floor_area_cloud(   new pcl::PointCloud<pcl::PointXYZ>),
         obstacles_cloud(    new pcl::PointCloud<pcl::PointXYZ>),
         flattened_cloud(    new pcl::PointCloud<pcl::PointXYZ>),
-        obstacle_map( mapWidth, std::vector<int>( mapDepth, 0) ) {}
+        obstacle_map( mapWidth, std::vector<int>( mapDepth, 0) ),
+        obstacle_map_empty( mapWidth, std::vector<int>( mapDepth, 0) ) {}
     ~CollisionDetector();
     
     void start();
@@ -34,7 +32,7 @@ public:
     RsCamera rsCamera;
     ObjectDetector objectDetector;
     Displayer display;
-    PCLViewer pclViewer;
+    // PCLViewer pclViewer;
 
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr              xyzrgb_cloud;
@@ -49,6 +47,7 @@ public:
     int mapWidth  = 400;
     int mapDepth  = 400;
     std::vector<std::vector<int>> obstacle_map;
+    std::vector<std::vector<int>> obstacle_map_empty;
 };
 
 

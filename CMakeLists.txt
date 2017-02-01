@@ -73,6 +73,18 @@ link_directories( ${PCL_LIBRARY_DIRS} /usr/local/lib /usr/lib/x86_64-linux-gnu )
 add_definitions( ${PCL_DEFINITIONS} )
 
 
+#Add python libraries
+#--------------------------------------------------------------------------
+find_package(PythonLibs REQUIRED)
+IF(NOT PythonLibs_FOUND)
+	MESSAGE(FATAL_ERROR "Unable to find  python")
+ELSE()
+	include_directories(${PYTHON_INCLUDE_DIRS})
+	MESSAGE("python library found")
+ENDIF()
+
+
+include_directories("/home/morgan/src/unidrive-edit/lib/platform/tools/can/")
 
 
 # Add Aruco library used for marker tracking/detection
@@ -102,9 +114,6 @@ add_definitions( ${PCL_DEFINITIONS} )
 # add_executable( bin/realsenseTest src/main.cpp )
 # target_link_libraries( bin/realsenseTest ${OpenCV_LIBS} realsense)
 
-# Main collision avoidance program:
-add_executable( bin/collision src/Camera.cpp src/ObjectDetector.cpp src/RsCamera.cpp src/main.cpp )
-target_link_libraries( bin/collision ${OpenCV_LIBS} realsense ${DEPENDENCIES} ${PCL_LIBRARIES} ${PCL_IO_LIBRARIES} )
 
 
 # link Python wrapper/package with Boost and create libraries
@@ -138,6 +147,9 @@ IF(Boost_FOUND)
     ADD_LIBRARY(_collision_ext SHARED src/Camera.hpp src/RsCamera.cpp src/ObjectDetector.cpp src/CollsionDetector.cpp src/collision_ext.cpp)
     TARGET_LINK_LIBRARIES(_collision_ext ${Boost_LIBRARIES}  ${OpenCV_LIBS} realsense ${DEPENDENCIES} ${PCL_LIBRARIES} ${PCL_IO_LIBRARIES} )
 
+   # Main collision avoidance program:
+   add_executable( bin/collision src/Camera.cpp src/ObjectDetector.cpp src/RsCamera.cpp src/main.cpp )
+   target_link_libraries( bin/collision ${OpenCV_LIBS} realsense ${DEPENDENCIES} ${PCL_LIBRARIES} ${PCL_IO_LIBRARIES} ${Boost_LIBRARIES} ${PythonLibs_LIBRARIES} ${PYTHON_LIBRARIES})
 
   ELSEIF(NOT Boost_FOUND)
     MESSAGE(FATAL_ERROR "Unable to find  Boost python")
